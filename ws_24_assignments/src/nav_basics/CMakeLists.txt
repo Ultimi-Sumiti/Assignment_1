@@ -21,7 +21,6 @@ ament_target_dependencies(nav2_action_client rclcpp nav2_msgs rclcpp_action )
 
 
 install(TARGETS
-    nav_node
     lifecycle_nodes_client
     nav2_action_client
   DESTINATION lib/${PROJECT_NAME})
