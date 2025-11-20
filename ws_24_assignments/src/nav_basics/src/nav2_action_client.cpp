@@ -1,15 +1,8 @@
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
-#include "nav2_msgs/action/navigate_to_pose.hpp"
-
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp" // Msg needed for the Topic
-#include <array> // Necessario per popolare l'array di covarianza
-
-//#include "rclcpp_components/register_node_macro.hpp"
+#include "rclcpp_action/rclcpp_action.hpp" 
+#include "nav2_msgs/action/navigate_to_pose.hpp" // Action interface with nav2 library
 
 using namespace std::chrono_literals;
-
-
 
 class Nav2ActionClient : public rclcpp::Node
 {
@@ -20,7 +13,7 @@ public:
     Nav2ActionClient(const rclcpp::NodeOptions &options)
         : Node("nav2_action_client", options)
     {
-
+        // Client to interface with the action_server bt_navigator
         action_client_ = rclcpp_action::create_client<NavigateToPoseAction>(
             this, "navigate_to_pose");
 
@@ -29,7 +22,7 @@ public:
         { return this->send_goal(); };
 
         // Timer to call the send_goal function, implemented with lambda function 2Hz
-        // NOTE : in the implementation below we will see that we call the function just 1 time in reality so the freq is not so much improtant
+        // NOTE : in the implementation below we will see that we call the function just 1 time in reality, so the freq is not so much improtant
         this->timer_ = this->create_wall_timer(
             std::chrono::milliseconds(500),
             timer_callback_lambda);
@@ -63,10 +56,7 @@ public:
         goal_msg.pose.pose.orientation.y = 0.0;
         goal_msg.pose.pose.orientation.z = 0.0;
         goal_msg.pose.pose.orientation.w = 1.0;
-
         
-        
-
         RCLCPP_INFO(this->get_logger(), "Sending goal");
 
         // Object to embed 3 callbacks:
@@ -90,7 +80,7 @@ public:
                                                   GoalHandle::SharedPtr,
                                                   const std::shared_ptr<const NavigateToPoseAction::Feedback> feedback)
         {
-            // Puoi stampare la distanza rimanente, che è un dato utile nel feedback di NavigateToPose
+            // Printing the remainin distance from the feedback sended by NavifateToPose action interface
             RCLCPP_INFO(this->get_logger(), "Distance remaining: %.2f m", feedback->distance_remaining);
         };
 
@@ -119,18 +109,16 @@ public:
     }
 
     private:
-        rclcpp_action::Client<NavigateToPoseAction>::SharedPtr action_client_;
-
-        rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_publisher_; // Publisher for the /initialpose topic
-        rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp_action::Client<NavigateToPoseAction>::SharedPtr action_client_; // Action client
+        rclcpp::TimerBase::SharedPtr timer_; // Timer for sending the goal (just 1 time)
         
 
 };
 
+// Main function
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    // Usa std::make_shared con NodeOptions per il costruttore corretto
     rclcpp::spin(std::make_shared<Nav2ActionClient>(rclcpp::NodeOptions())); 
     rclcpp::shutdown();
     return 0;
