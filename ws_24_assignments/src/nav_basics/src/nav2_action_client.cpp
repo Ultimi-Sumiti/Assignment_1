@@ -8,6 +8,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "geometry_msgs/msg/point_stamped.hpp"
 #include "tf2/convert.hpp"
+#include "std_msgs/msg/string.hpp"
 
 #include <array>
 
@@ -39,6 +40,11 @@ public:
         this->timer_ = this->create_wall_timer(
             std::chrono::milliseconds(500),
             timer_callback_lambda);
+
+        start_perception_publisher_ = this->create_publisher<std_msgs::msg::String>(
+            "/start_perception",
+            10
+        );
     }
 
     void send_goal()
@@ -96,7 +102,7 @@ public:
                                                   const std::shared_ptr<const NavigateToPoseAction::Feedback> feedback)
         {
             // Printing the remainin distance from the feedback sended by NavifateToPose action interface
-            //RCLCPP_INFO(this->get_logger(), "Distance remaining: %.2f m", feedback->distance_remaining);
+            RCLCPP_INFO(this->get_logger(), "Distance remaining: %.2f m", feedback->distance_remaining);
         };
 
         // Result callbacks (wait for the Result response by the Server)
@@ -105,8 +111,14 @@ public:
             switch (result.code)
             {
             case rclcpp_action::ResultCode::SUCCEEDED:
+            {
+                std_msgs::msg::String start_msg;
+                start_msg.data = "start";
+                start_perception_publisher_->publish(start_msg);
+
                 RCLCPP_INFO(this->get_logger(), "Goal has succeded");
                 break;
+            }
             case rclcpp_action::ResultCode::ABORTED:
                 RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
                 return;
@@ -163,8 +175,8 @@ public:
         goal[0] = v.point.x + r[0] / 2;
         goal[1] = v.point.y + r[1] / 2;
 
-        goal[0] *= 0.9;
-        goal[1] *= 0.9;
+        goal[0] *= 0.92;
+        goal[1] *= 0.92;
 
         // Log tranformed point.
         RCLCPP_INFO(this->get_logger(),
@@ -182,6 +194,7 @@ public:
     private:
         rclcpp_action::Client<NavigateToPoseAction>::SharedPtr action_client_; // Action client
         rclcpp::TimerBase::SharedPtr timer_; // Timer for sending the goal (just 1 time)
+        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr start_perception_publisher_; // Publisher for the /start_perception topic
 
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_;

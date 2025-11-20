@@ -1,9 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_msgs/srv/manage_lifecycle_nodes.hpp" // Service interface with nav2 library 
+#include "nav2_msgs/srv/manage_lifecycle_nodes.hpp"           // Service interface with nav2 library
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp" // Msg needed for the Topic /initialpose
-#include <array> //  To fill the array of covariance needed to the initial pose msg
-
-
+#include <array>                                              //  To fill the array of covariance needed to the initial pose msg
 
 class ManageLifecycleNodesClient : public rclcpp::Node
 {
@@ -14,15 +12,13 @@ public:
         // Client of navigation and localization
         navigation_client_ = create_client<nav2_msgs::srv::ManageLifecycleNodes>("/lifecycle_manager_navigation/manage_nodes");
         localization_client_ = create_client<nav2_msgs::srv::ManageLifecycleNodes>("/lifecycle_manager_localization/manage_nodes");
-        
+
         // Publisher for setting the initial pose
         initial_pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
             "/initialpose",
-            10
-        );
+            10);
     }
 
-    // Service request to localization stack
     void send_request_localization()
     {
         auto request = std::make_shared<nav2_msgs::srv::ManageLifecycleNodes::Request>();
@@ -46,7 +42,6 @@ public:
         publish_initial_pose();
     }
 
-    // Service reqeust to navigation stack
     void send_request_navigation()
     {
 
@@ -69,7 +64,6 @@ public:
         }
     }
 
-    // Function to publish initial pose of the robot in the dedicated topic /intialpose
     void publish_initial_pose()
     {
 

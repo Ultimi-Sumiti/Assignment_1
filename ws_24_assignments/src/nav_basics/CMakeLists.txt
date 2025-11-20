@@ -30,6 +30,10 @@ install(TARGETS
     nav2_action_client
   DESTINATION lib/${PROJECT_NAME})
 
+install(
+    DIRECTORY cfg
+    DESTINATION share/${PROJECT_NAME}
+  )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

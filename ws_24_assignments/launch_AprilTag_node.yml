@@ -22,7 +22,7 @@ launch:
         to: /rgb_camera/camera_info
         
       param:
-      - from: $(find-pkg-share apriltag_ros)/cfg/tags_36h11.yaml
+      - from: $(find-pkg-share nav_basics)/cfg/tags_36h11.yaml
 
       extra_arg:
       - name: use_intra_process_comms
