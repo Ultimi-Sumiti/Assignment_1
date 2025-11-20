@@ -40,6 +40,8 @@ srv/_*.py
 qtcreator-*
 *.user
 
+.cache
+
 /planning/cfg
 /planning/docs
 /planning/src
