@@ -2,6 +2,15 @@
 #include "rclcpp_action/rclcpp_action.hpp" 
 #include "nav2_msgs/action/navigate_to_pose.hpp" // Action interface with nav2 library
 
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_msgs/msg/tf_message.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "geometry_msgs/msg/point_stamped.hpp"
+#include "tf2/convert.hpp"
+
+#include <array>
+
 using namespace std::chrono_literals;
 
 class Nav2ActionClient : public rclcpp::Node
@@ -13,6 +22,10 @@ public:
     Nav2ActionClient(const rclcpp::NodeOptions &options)
         : Node("nav2_action_client", options)
     {
+        // Init transform buffer and transform listener.
+        tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+        tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
         // Client to interface with the action_server bt_navigator
         action_client_ = rclcpp_action::create_client<NavigateToPoseAction>(
             this, "navigate_to_pose");
@@ -40,16 +53,18 @@ public:
         {
             RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
             rclcpp::shutdown();
-       }
+        }
 
-        RCLCPP_INFO(this->get_logger(), "Sending goal... ");
+        // Define the goal position.
+        std::array<double, 2> goal = get_goal_position();
 
         // Goal service request
+        RCLCPP_INFO(this->get_logger(), "Sending goal... ");
         auto goal_msg = nav2_msgs::action::NavigateToPose::Goal();
         goal_msg.pose.header.frame_id = "map";
         goal_msg.pose.header.stamp = this->now();
-        goal_msg.pose.pose.position.x = 10.0;
-        goal_msg.pose.pose.position.y = 1.0;
+        goal_msg.pose.pose.position.x = goal[0];
+        goal_msg.pose.pose.position.y = goal[1];
         goal_msg.pose.pose.position.z = 0.0;
 
         goal_msg.pose.pose.orientation.x = 0.0;
@@ -81,7 +96,7 @@ public:
                                                   const std::shared_ptr<const NavigateToPoseAction::Feedback> feedback)
         {
             // Printing the remainin distance from the feedback sended by NavifateToPose action interface
-            RCLCPP_INFO(this->get_logger(), "Distance remaining: %.2f m", feedback->distance_remaining);
+            //RCLCPP_INFO(this->get_logger(), "Distance remaining: %.2f m", feedback->distance_remaining);
         };
 
         // Result callbacks (wait for the Result response by the Server)
@@ -108,11 +123,72 @@ public:
         this->action_client_->async_send_goal(goal_msg, send_goal_options);
     }
 
+    std::array<double, 2> get_goal_position() {
+        auto transform_tag0_base = 
+            this->tf_buffer_->lookupTransform(
+                base_frame_, // Target frame.
+                tag1_frame_, // Source frame.
+                tf2::TimePointZero,
+                std::chrono::seconds(5) // Wait up to 5 sec.
+            );
+
+        auto transform_tag10_base = 
+            this->tf_buffer_->lookupTransform(
+                base_frame_,  // Target frame.
+                tag10_frame_, // Source frame.
+                tf2::TimePointZero,
+                std::chrono::seconds(5) // Wait up to 5 sec.
+            );
+
+        // Point in vc.
+        geometry_msgs::msg::PointStamped pt_in_tag1;
+        pt_in_tag1.header.frame_id = base_frame_;
+        pt_in_tag1.header.stamp = transform_tag0_base.header.stamp;
+
+        // Point in cs.
+        geometry_msgs::msg::PointStamped pt_in_tag10;
+        pt_in_tag10.header.frame_id = base_frame_;
+        pt_in_tag10.header.stamp = transform_tag10_base.header.stamp;
+
+        // Tranform points.
+        geometry_msgs::msg::PointStamped v, u;
+        tf2::doTransform(pt_in_tag1, v, transform_tag0_base);
+        tf2::doTransform(pt_in_tag10, u, transform_tag10_base);
+
+        std::array<double, 2> r;
+        r[0] = u.point.x - v.point.x;
+        r[1] = u.point.y - v.point.y;
+
+        std::array<double, 2> goal;
+        goal[0] = v.point.x + r[0] / 2;
+        goal[1] = v.point.y + r[1] / 2;
+
+        goal[0] *= 0.9;
+        goal[1] *= 0.9;
+
+        // Log tranformed point.
+        RCLCPP_INFO(this->get_logger(),
+            "\n\tv  point: x=%.3f y=%.3f z=0"
+            "\n\tu point: x=%.3f y=%.3f z=0"
+            "\n\tgoal  point: x=%.3f y=%.3f z=0",
+            v.point.x, v.point.y,
+            u.point.x, u.point.y,
+            goal[0], goal[1]
+        );
+
+        return goal;
+    }
+
     private:
         rclcpp_action::Client<NavigateToPoseAction>::SharedPtr action_client_; // Action client
         rclcpp::TimerBase::SharedPtr timer_; // Timer for sending the goal (just 1 time)
-        
 
+        std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+        std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+        const std::string tag1_frame_  = "tag36h11:1";
+        const std::string tag10_frame_ = "tag36h11:10";
+        const std::string base_frame_  = "base_link";
 };
 
 // Main function
