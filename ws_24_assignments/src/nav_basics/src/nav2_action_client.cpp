@@ -2,6 +2,7 @@
 #include "rclcpp_action/rclcpp_action.hpp" 
 #include "nav2_msgs/action/navigate_to_pose.hpp" // Action interface with nav2 library
 
+#include "tf2/exceptions.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_msgs/msg/tf_message.hpp"
@@ -136,6 +137,7 @@ public:
     }
 
     std::array<double, 2> get_goal_position() {
+
         auto transform_tag0_base = 
             this->tf_buffer_->lookupTransform(
                 base_frame_, // Target frame.
@@ -167,6 +169,7 @@ public:
         tf2::doTransform(pt_in_tag1, v, transform_tag0_base);
         tf2::doTransform(pt_in_tag10, u, transform_tag10_base);
 
+
         std::array<double, 2> r;
         r[0] = u.point.x - v.point.x;
         r[1] = u.point.y - v.point.y;
@@ -194,6 +197,7 @@ public:
     private:
         rclcpp_action::Client<NavigateToPoseAction>::SharedPtr action_client_; // Action client
         rclcpp::TimerBase::SharedPtr timer_; // Timer for sending the goal (just 1 time)
+        rclcpp::TimerBase::SharedPtr timer2_; 
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr start_perception_publisher_; // Publisher for the /start_perception topic
 
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
