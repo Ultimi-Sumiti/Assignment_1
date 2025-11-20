@@ -42,7 +42,7 @@ public:
             std::chrono::milliseconds(500),
             timer_callback_lambda);
 
-        start_perception_publisher_ = this->create_publisher<std_msgs::msg::String>(
+        start_percept_publisher_ = this->create_publisher<std_msgs::msg::String>(
             "/start_perception",
             10
         );
@@ -52,26 +52,32 @@ public:
     {
         using namespace std::placeholders;
 
-        // We want to send just one goal in this implementation aka we require just 1 sequence of fibonacci
-        this->timer_->cancel();
-
         // Wait to switch online the fibonacci Server otherwise after a time limit switch off the node
         if (!this->action_client_->wait_for_action_server())
         {
-            RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
-            rclcpp::shutdown();
+            RCLCPP_ERROR(
+                this->get_logger(),
+                "Action server not available after waiting"
+            );
+            //rclcpp::shutdown();
+            return;
         }
 
         // Define the goal position.
-        std::array<double, 2> goal = get_goal_position();
+        set_goal_position();
+        if (goal_position_[0] == 0 && goal_position_[1] == 0)
+            return;
+
+        // Stop timer, just one goal is send.
+        this->timer_->cancel();
 
         // Goal service request
         RCLCPP_INFO(this->get_logger(), "Sending goal... ");
         auto goal_msg = nav2_msgs::action::NavigateToPose::Goal();
         goal_msg.pose.header.frame_id = "map";
         goal_msg.pose.header.stamp = this->now();
-        goal_msg.pose.pose.position.x = goal[0];
-        goal_msg.pose.pose.position.y = goal[1];
+        goal_msg.pose.pose.position.x = goal_position_[0];
+        goal_msg.pose.pose.position.y = goal_position_[1];
         goal_msg.pose.pose.position.z = 0.0;
 
         goal_msg.pose.pose.orientation.x = 0.0;
@@ -79,80 +85,91 @@ public:
         goal_msg.pose.pose.orientation.z = 0.0;
         goal_msg.pose.pose.orientation.w = 1.0;
         
-        RCLCPP_INFO(this->get_logger(), "Sending goal");
+        RCLCPP_INFO(this->get_logger(), "Sending goal...");
 
         // Object to embed 3 callbacks:
         auto send_goal_options = rclcpp_action::Client<NavigateToPoseAction>::SendGoalOptions();
 
         // Goal response callback (Wait the acceptance responce of the Goal by the Server)
-        send_goal_options.goal_response_callback = [this](const GoalHandle::SharedPtr &goal_handle)
-        {
-            if (!goal_handle)
-            {
-                RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-            }
-            else
-            {
-                RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
-            }
-        };
+        send_goal_options.goal_response_callback = 
+            [this](const GoalHandle::SharedPtr &goal_handle) {
+                if (!goal_handle)
+                    RCLCPP_ERROR(this->get_logger(),
+                        "Goal was rejected by server");
+                else
+                    RCLCPP_INFO(this->get_logger(),
+                        "Goal accepted by server, waiting for result");
+            };
 
         // Feedback callback (wait the feedback from Server)
-        send_goal_options.feedback_callback = [this](
-                                                  GoalHandle::SharedPtr,
-                                                  const std::shared_ptr<const NavigateToPoseAction::Feedback> feedback)
-        {
-            // Printing the remainin distance from the feedback sended by NavifateToPose action interface
-            RCLCPP_INFO(this->get_logger(), "Distance remaining: %.2f m", feedback->distance_remaining);
-        };
+        send_goal_options.feedback_callback = 
+            [this](
+                    GoalHandle::SharedPtr,
+                    const std::shared_ptr<const NavigateToPoseAction::Feedback> feedback)
+            {
+                RCLCPP_INFO(this->get_logger(), 
+                    "Distance remaining: %.2f m",
+                    feedback->distance_remaining);
+            };
 
         // Result callbacks (wait for the Result response by the Server)
-        send_goal_options.result_callback = [this](const GoalHandle::WrappedResult &result)
-        {
-            switch (result.code)
-            {
-            case rclcpp_action::ResultCode::SUCCEEDED:
-            {
-                std_msgs::msg::String start_msg;
-                start_msg.data = "start";
-                start_perception_publisher_->publish(start_msg);
+        send_goal_options.result_callback =
+            [this](const GoalHandle::WrappedResult &result) {
+                switch (result.code)
+                {
+                    case rclcpp_action::ResultCode::SUCCEEDED:
+                        {
+                            std_msgs::msg::String start_msg;
+                            start_msg.data = "start";
+                            start_percept_publisher_->publish(start_msg);
 
-                RCLCPP_INFO(this->get_logger(), "Goal has succeded");
-                break;
-            }
-            case rclcpp_action::ResultCode::ABORTED:
-                RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-                return;
-            case rclcpp_action::ResultCode::CANCELED:
-                RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
-                return;
-            default:
-                RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-                return;
-            }
+                            RCLCPP_INFO(this->get_logger(), "Goal has succeded");
+                            break;
+                        }
+                    case rclcpp_action::ResultCode::ABORTED:
+                        RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
+                        return;
+                    case rclcpp_action::ResultCode::CANCELED:
+                        RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
+                        return;
+                    default:
+                        RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+                        return;
+                }
 
-            rclcpp::shutdown();
-        };
+                rclcpp::shutdown();
+            };
+
         this->action_client_->async_send_goal(goal_msg, send_goal_options);
     }
 
-    std::array<double, 2> get_goal_position() {
+    void set_goal_position() {
+        // Define the two transformations.
+        geometry_msgs::msg::TransformStamped transform_tag0_base;
+        geometry_msgs::msg::TransformStamped transform_tag10_base;
 
-        auto transform_tag0_base = 
-            this->tf_buffer_->lookupTransform(
+        goal_position_[0] = 0.0;
+        goal_position_[1] = 0.0;
+
+        try {
+            transform_tag0_base = this->tf_buffer_->lookupTransform(
                 base_frame_, // Target frame.
                 tag1_frame_, // Source frame.
                 tf2::TimePointZero,
                 std::chrono::seconds(5) // Wait up to 5 sec.
             );
 
-        auto transform_tag10_base = 
-            this->tf_buffer_->lookupTransform(
+            transform_tag10_base = this->tf_buffer_->lookupTransform(
                 base_frame_,  // Target frame.
                 tag10_frame_, // Source frame.
                 tf2::TimePointZero,
                 std::chrono::seconds(5) // Wait up to 5 sec.
             );
+
+        } catch (const tf2::TransformException& ex) {
+            RCLCPP_ERROR(this->get_logger(), "No TRANSFORM");
+            return;
+        }
 
         // Point in vc.
         geometry_msgs::msg::PointStamped pt_in_tag1;
@@ -169,36 +186,28 @@ public:
         tf2::doTransform(pt_in_tag1, v, transform_tag0_base);
         tf2::doTransform(pt_in_tag10, u, transform_tag10_base);
 
-
+        // Compute r = v - u.
         std::array<double, 2> r;
         r[0] = u.point.x - v.point.x;
         r[1] = u.point.y - v.point.y;
 
-        std::array<double, 2> goal;
-        goal[0] = v.point.x + r[0] / 2;
-        goal[1] = v.point.y + r[1] / 2;
+        goal_position_[0] = v.point.x + r[0] / 2;
+        goal_position_[1] = v.point.y + r[1] / 2;
 
-        goal[0] *= 0.92;
-        goal[1] *= 0.92;
+        goal_position_[0] *= 0.92;
+        goal_position_[1] *= 0.92;
 
         // Log tranformed point.
         RCLCPP_INFO(this->get_logger(),
-            "\n\tv  point: x=%.3f y=%.3f z=0"
-            "\n\tu point: x=%.3f y=%.3f z=0"
-            "\n\tgoal  point: x=%.3f y=%.3f z=0",
-            v.point.x, v.point.y,
-            u.point.x, u.point.y,
-            goal[0], goal[1]
+            "\n\tgoal position: x=%.3f y=%.3f z=0",
+            goal_position_[0], goal_position_[1]
         );
-
-        return goal;
     }
 
     private:
-        rclcpp_action::Client<NavigateToPoseAction>::SharedPtr action_client_; // Action client
-        rclcpp::TimerBase::SharedPtr timer_; // Timer for sending the goal (just 1 time)
-        rclcpp::TimerBase::SharedPtr timer2_; 
-        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr start_perception_publisher_; // Publisher for the /start_perception topic
+        rclcpp_action::Client<NavigateToPoseAction>::SharedPtr action_client_;
+        rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr start_percept_publisher_;
 
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
@@ -206,7 +215,10 @@ public:
         const std::string tag1_frame_  = "tag36h11:1";
         const std::string tag10_frame_ = "tag36h11:10";
         const std::string base_frame_  = "base_link";
+
+        std::array<double, 2> goal_position_;
 };
+
 
 // Main function
 int main(int argc, char **argv)
