@@ -50,11 +50,9 @@ colcon build
 
 #Launch setup.bash: 
 source install/setup.bash
+
+#Launch the launch file:
 ros2 launch nav_basics launch.py 
-
-
-
-source install/setup.bash
 ```
 
 ## Results:
