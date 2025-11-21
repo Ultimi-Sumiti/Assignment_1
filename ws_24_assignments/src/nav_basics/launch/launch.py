@@ -1,18 +1,19 @@
 import os
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import IncludeLaunchDescription, TimerAction, RegisterEventHandler, EmitEvent, LogInfo
+from launch.launch_description_sources import PythonLaunchDescriptionSource, FrontendLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
-from launch.actions import  TimerAction
-from launch.launch_description_sources import FrontendLaunchDescriptionSource
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
+from launch.actions import GroupAction
 
 def generate_launch_description():
 
     pkg_name = 'nav_basics'
 
-    external_launch = IncludeLaunchDescription(
+    assignment1_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
                 FindPackageShare('ir_launch'),
@@ -36,35 +37,44 @@ def generate_launch_description():
         package=pkg_name,
         executable='lifecycle_nodes_client',
         name='lifecycle_nodes_client',
-        output='screen'
+        output='screen',
+        emulate_tty=True
     )
 
-    nav2_action_client = Node(
-        package=pkg_name,
-        executable='nav2_action_client',
-        name='nav2_action_client',
-        output='screen'
+    # The two nodes below must start after lifecycle_nodes_client.
+    dependent_nodes = GroupAction(
+        actions=[
+            Node(
+                package=pkg_name,
+                executable='nav2_action_client',
+                name='nav2_action_client',
+                output='screen',
+                emulate_tty=True
+            ),
+            
+            Node(
+                package=pkg_name,
+                executable='perception_node',
+                name='perception_node',
+                output='screen',
+                emulate_tty=True
+            ),
+        ]
     )
 
-    perception_node = Node(
-        package=pkg_name,
-        executable='perception_node',
-        name='perception_node',
-        output='screen'
+    delay_dependent_launch = RegisterEventHandler(
+        OnProcessExit(
+            target_action=lifecycle_nodes_client,
+            on_exit=[dependent_nodes],
+        )
     )
 
-    delayed_nav2_action_client= TimerAction(
-        period=4.0,
-        actions=[nav2_action_client] # This start the node with 4 seconds of retard, to let the server catch some apple.
-    )
-
-
+    # Create launch descriptor.
     ld = LaunchDescription()
     
-    ld.add_action(external_launch)
+    ld.add_action(assignment1_launch)
     ld.add_action(apriltag_launch)
     ld.add_action(lifecycle_nodes_client)
-    ld.add_action(delayed_nav2_action_client)
-    ld.add_action(perception_node)
+    ld.add_action(delay_dependent_launch)
 
     return ld
