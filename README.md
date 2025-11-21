@@ -59,7 +59,6 @@ source install/setup.bash
 ### Results of cylinders detections
 A|B
 --|--
-
 ![detections_result](https://github.com/user-attachments/assets/26cd9a31-7f16-4e80-b50f-ad39bb1cdd43)|![blur_result_detections](https://github.com/user-attachments/assets/eddab89d-b8a7-48f1-a715-14c7346d387e)
 
 
