@@ -52,5 +52,12 @@ colcon build
 source install/setup.bash
 ```
 
-## Result of nav2 navigation and apriltag detection
+## Results:
+### Result of nav2 navigation and apriltag detection
 [Result of navigation and apriltag detection](https://github.com/user-attachments/assets/4f872ba5-8d36-44c5-ba33-10467093fbf6)
+
+### Results of cylinders detections
+
+
+[Results of cylinders detections](https://github.com/user-attachments/assets/0eac19a0-b416-4aad-819b-158b9f3dafa2)
+
