@@ -38,17 +38,17 @@ This solution is designed to run within the pre-configured workspace from the as
 If you haven't already, please follow the initial setup steps to initialize your dedicated workspace and clone the necessary packages (`ir_2526`):
 
 ```bash
-Clone the repository:
+#Clone the repository:
 git clone [https://github.com/Ultimi-Sumiti/Assignment_1](https://github.com/Ultimi-Sumiti/Assignment_1)
 
-Position in the correct directory/workspace:
+#Position in the correct directory/workspace:
 cd Assignment_1
 cd ws_24_assignments
 
-Build the package:
+#Build the package:
 colcon build
 
-Source 
+#Launch setup.bash: 
 source install/setup.bash
 ros2 launch nav_basics launch.py 
 
