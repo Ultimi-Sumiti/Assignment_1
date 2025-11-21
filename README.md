@@ -57,7 +57,10 @@ source install/setup.bash
 [Result of navigation and apriltag detection](https://github.com/user-attachments/assets/4f872ba5-8d36-44c5-ba33-10467093fbf6)
 
 ### Results of cylinders detections
+A|B
+--|--
+
+![detections_result](https://github.com/user-attachments/assets/26cd9a31-7f16-4e80-b50f-ad39bb1cdd43)|![detections_result](https://github.com/user-attachments/assets/26cd9a31-7f16-4e80-b50f-ad39bb1cdd43)
 
 
-[Results of cylinders detections](https://github.com/user-attachments/assets/0eac19a0-b416-4aad-819b-158b9f3dafa2)
 
