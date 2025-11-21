@@ -29,6 +29,22 @@ The final pipeline, developed as a modular ROS 2 package, includes the following
 </p>
 
 
+## Results:
+### Result of nav2 navigation and apriltag detection
+[Result of navigation and apriltag detection](https://github.com/user-attachments/assets/4f872ba5-8d36-44c5-ba33-10467093fbf6)
+
+As you can see the robot correctly perform the posiotioning in the initial pose, passed through the topic \initialpose, also it correctly receive the goal position and plans
+the  path using the costs matrix. In the end it detects the april tags and position itself in a close position as required.
+
+### Results of cylinders detections
+Detections of cylinders | Blurred intermediate file
+--|--
+![detections_result](https://github.com/user-attachments/assets/26cd9a31-7f16-4e80-b50f-ad39bb1cdd43)|![blur_result_detections](https://github.com/user-attachments/assets/eddab89d-b8a7-48f1-a715-14c7346d387e)
+
+The left image contains some frames of the detection of the three cylinders, while the right frame contains the intermediate file used to perform the detections.
+
+
+
 ## How to launch
 
 This solution is designed to run within the pre-configured workspace from the assignment setup.
@@ -54,20 +70,5 @@ source install/setup.bash
 #Launch the launch file:
 ros2 launch nav_basics launch.py 
 ```
-
-## Results:
-### Result of nav2 navigation and apriltag detection
-[Result of navigation and apriltag detection](https://github.com/user-attachments/assets/4f872ba5-8d36-44c5-ba33-10467093fbf6)
-
-As you can see the robot correctly perform the posiotioning in the initial pose, passed through the topic \initialpose, also it correctly receive the goal position and plans
-the  path using the costs matrix. In the end it detects the april tags and position itself in a close position as required.
-
-### Results of cylinders detections
-Detections of cylinders | Blurred intermediate file
---|--
-![detections_result](https://github.com/user-attachments/assets/26cd9a31-7f16-4e80-b50f-ad39bb1cdd43)|![blur_result_detections](https://github.com/user-attachments/assets/eddab89d-b8a7-48f1-a715-14c7346d387e)
-
-The left image contains some frames of the detection of the three cylinders, while the right frame contains the intermediate file used to perform the detections.
-
 
 
