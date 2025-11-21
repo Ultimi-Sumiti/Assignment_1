@@ -16,6 +16,7 @@ The robot spawns at the lab entrance at the launch of the simulation, and should
 <p align="center" >
 <img width="419" height="496" alt="final_position" src="https://github.com/user-attachments/assets/db24c7d0-7621-4ddb-802e-b1419a106c0e" />
 </p>
+
 ## Pipeline Components:
 
 The final pipeline, developed as a modular ROS 2 package, includes the following components/nodes:
