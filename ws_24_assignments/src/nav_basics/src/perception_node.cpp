@@ -82,9 +82,6 @@ cv::Mat remove_walls(const cv::Mat img) {
         float rho = line[0];
         float theta = line[1];
 
-        // Conversion from rad to degree.
-        float deg = 180 * theta / CV_PI;
-
         // Define two points on the line.
         cv::Point pt1, pt2;
         double a = std::cos(theta), b = std::sin(theta);
