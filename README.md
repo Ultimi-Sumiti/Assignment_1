@@ -57,7 +57,7 @@ source install/setup.bash
 [Result of navigation and apriltag detection](https://github.com/user-attachments/assets/4f872ba5-8d36-44c5-ba33-10467093fbf6)
 
 ### Results of cylinders detections
-A|B
+Detections of cylinders | Blurred intermediate file
 --|--
 ![detections_result](https://github.com/user-attachments/assets/26cd9a31-7f16-4e80-b50f-ad39bb1cdd43)|![blur_result_detections](https://github.com/user-attachments/assets/eddab89d-b8a7-48f1-a715-14c7346d387e)
 
