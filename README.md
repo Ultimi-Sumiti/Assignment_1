@@ -58,7 +58,7 @@ If you haven't already, please follow the initial setup steps to initialize your
 
 ```bash
 #Clone the repository:
-git clone [https://github.com/Ultimi-Sumiti/Assignment_1](https://github.com/Ultimi-Sumiti/Assignment_1)
+git clone https://github.com/Ultimi-Sumiti/Assignment_1
 
 #Position in the correct directory/workspace:
 cd Assignment_1
