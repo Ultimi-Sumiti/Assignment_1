@@ -19,15 +19,8 @@ The core mission for the Turtlebot 3 is to:
 The final pipeline, developed as a modular ROS 2 package, includes the following components/nodes:
 * **lifecycle node client:** This node is the client which interact with the nav2 navigation framework, sending initial position and request to the localization and navigation components.
 * **navigation action client:** This node is an action client sending goal request to the nav2 framework and waiting for response and feedback, to then calculate and reach a safe position between the two detected AprilTags without hitting them.
-* **Cyk Detection:** Detecting the three cylindrical tables using any available sensor (e.g., Lidar, camera, etc.).
-* **Position Reporting:** Publishing the positions of the detected tables relative to the `odom` reference frame.
-
-*
-
-We have implemented the extra credit challenge to demonstrate advanced navigation control:
-* **Corridor Navigation:** Navigation to the final goal is **stopped** when the robot enters the corridor.
-* **Custom Wall Following:** The robot switches to a **custom navigation method** inside the corridor, sending direct velocity commands and using the Lidar for wall detection.
-* **Resumption:** Standard navigation to the AprilTag goal is **resumed** once the robot exits the corridor.
+* **perception node:** Detecting the three cylindrical objects using lidar scan data, in particular we have converted the data from the topic into an cv::Mat object to then apply
+  the Hough transform to remove all the straight line present in the new object. After these operations we performed again Hough, but this time to detect the circular objects in the 2d frame, this where the detections that where subsequently converted in the odom frame and sent into the cylinders topic.
 
 ## How to launch
 
