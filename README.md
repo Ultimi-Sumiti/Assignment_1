@@ -23,7 +23,7 @@ The final pipeline, developed as a modular ROS 2 package, includes the following
   
 * **perception node:** Detecting the three cylindrical objects using lidar scan data, in particular we have converted the data from the topic into an cv::Mat object to then apply
   the Hough transform to remove all the straight line present in the new object.
-    **After these operations we performed again Hough, but this time to detect the circular objects in the 2d frame, this where the detections that where subsequently converted in the odom frame and sent into a dedicated topic.
+    -After these operations we performed again Hough, but this time to detect the circular objects in the 2d frame, this where the detections that where subsequently converted in the odom frame and sent into a dedicated topic.
 
 ## How to launch
 
