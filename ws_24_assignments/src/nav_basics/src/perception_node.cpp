@@ -56,9 +56,9 @@ cv::Mat remove_walls(const cv::Mat img) {
     cv::HoughLines(
         img,
         lines,
-        1,         // Rho 
-        CV_PI/180, // Theta
-        15,        // Threshold
+        1,         // Rho .
+        CV_PI/180, // Theta.
+        15,        // Threshold.
         0,
         0
     );
@@ -71,22 +71,18 @@ cv::Mat remove_walls(const cv::Mat img) {
         // From rad to degree.
         float deg = 180 * theta / CV_PI;
 
+        // Define two points on the line.
+        cv::Point pt1, pt2;
+        double a = std::cos(theta), b = std::sin(theta);
+        double x0 = a * rho, y0 = b * rho;
+        pt1.x = cvRound(x0 + 1000*(-b));
+        pt1.y = cvRound(y0 + 1000*(a));
+        pt2.x = cvRound(x0 - 1000*(-b));
+        pt2.y = cvRound(y0 - 1000*(a));
 
-        // Remove vertical and horizontal lines.
-        if (true) {
-
-            // Define two points on the line.
-            cv::Point pt1, pt2;
-            double a = std::cos(theta), b = std::sin(theta);
-            double x0 = a * rho, y0 = b * rho;
-            pt1.x = cvRound(x0 + 1000*(-b));
-            pt1.y = cvRound(y0 + 1000*(a));
-            pt2.x = cvRound(x0 - 1000*(-b));
-            pt2.y = cvRound(y0 - 1000*(a));
-
-            // Remove line.
-            cv::line(output, pt1, pt2, cv::Scalar(0), cv::LINE_AA);
-        }
+        // Remove line.
+        cv::line(output, pt1, pt2, cv::Scalar(0), cv::LINE_AA);
+        
     }
 
     return output;
@@ -253,6 +249,16 @@ public:
     RCLCPP_INFO_STREAM(this->get_logger(), "Total of: "<<cylinders_positions_.size()<<" cylinders found!");
     //cv::imshow("Laser Scan Image", scan_image);
     cv::imshow("Detected cylinders in green and red.", circles_image);
+    for(int i = 0; i < blurred_image.rows; i++){
+      for(int j = 0; j < blurred_image.cols; j++){
+        // **Use uchar (unsigned char) for CV_8UC1 images.**
+        if(blurred_image.at<uchar>(i,j) > 20){
+          blurred_image.at<uchar>(i,j) = (blurred_image.at<uchar>(i,j) + 80) % 256;
+        }else{
+          blurred_image.at<uchar>(i,j) = 0;
+        }
+      }
+    }
     cv::imshow("gaussian blur", blurred_image);
     cv::waitKey(1);
 
